@@ -24,14 +24,23 @@
             color: var(--text-main);
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
-            transition: transform 1.5s cubic-bezier(0.7, 0, 0.3, 1), filter 1.5s;
+            /* Плавный переход для фильтров */
+            transition: filter 2s ease;
         }
 
-        /* Эффект засасывания для всего тела */
-        body.collapsing {
-            transform: scale(0) rotate(720deg);
-            filter: blur(10px);
-            pointer-events: none;
+        /* КЛАСС ДЛЯ БЕСКОНЕЧНОГО ВРАЩЕНИЯ */
+        .infinite-spin {
+            animation: spin-forever 3s infinite linear;
+            filter: blur(1px) hue-rotate(10deg);
+            pointer-events: none; /* Чтобы кнопки нельзя было нажать во время вращения */
+            transform-origin: center center;
+            position: fixed;
+            width: 100%;
+        }
+
+        @keyframes spin-forever {
+            from { transform: scale(1) rotate(0deg); }
+            to { transform: scale(0.1) rotate(3600deg); } /* Сжимается и делает 10 оборотов за цикл */
         }
 
         .hero {
@@ -56,94 +65,11 @@
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 700;
-            width: fit-content;
             transition: 0.3s;
-            z-index: 10;
         }
 
         .activate-btn:hover { background: var(--accent); color: white; box-shadow: 0 0 20px var(--accent); }
 
-        /* РЕАЛЬНАЯ ЧЕРНАЯ ДЫРА */
-        #black-hole-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: radial-gradient(circle at center, #1a0000 0%, #000 70%);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-            opacity: 0;
-            transition: opacity 2s ease;
-        }
-
-        .bh-container {
-            position: relative;
-            width: 300px;
-            height: 300px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Тень/Горизонт событий */
-        .bh-shadow {
-            position: absolute;
-            width: 150px;
-            height: 150px;
-            background: #000;
-            border-radius: 50%;
-            z-index: 5;
-            box-shadow: 0 0 50px 10px #000, 0 0 20px 2px var(--accent);
-        }
-
-        /* Аккреционный диск (красное кольцо) */
-        .bh-disk {
-            position: absolute;
-            width: 100%;
-            height: 40%;
-            border-radius: 50%;
-            background: linear-gradient(90deg, transparent, var(--accent), #ff6600, var(--accent), transparent);
-            filter: blur(5px);
-            animation: rotateDisk 2s infinite linear;
-            box-shadow: 0 0 40px var(--accent);
-            transform: rotateX(70deg);
-        }
-
-        /* Искажение пространства */
-        .bh-distortion {
-            position: absolute;
-            width: 350px;
-            height: 350px;
-            border: 2px solid rgba(255, 0, 0, 0.1);
-            border-radius: 45%;
-            animation: rotateDistort 10s infinite linear;
-        }
-
-        @keyframes rotateDisk {
-            from { transform: rotateX(70deg) rotateZ(0deg); }
-            to { transform: rotateX(70deg) rotateZ(360deg); }
-        }
-
-        @keyframes rotateDistort {
-            from { transform: rotate(0deg) scale(1); }
-            to { transform: rotate(360deg) scale(1.1); }
-        }
-
-        .bh-text {
-            position: absolute;
-            bottom: 10%;
-            text-align: center;
-            width: 100%;
-            color: var(--accent);
-            font-family: monospace;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-        }
-
-        /* Остальные стили сайта */
         .phases-wrapper { width: 100%; }
         .phase-item { border-bottom: 1px solid var(--border); }
         .phase-header { padding: 45px 10%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -154,20 +80,19 @@
         .phase-content { max-height: 0; overflow: hidden; transition: 0.6s; padding: 0 10%; background-color: var(--hover-bg); }
         .phase-item.active .phase-content { max-height: 800px; padding-bottom: 60px; }
         .phase-item.active .phase-icon { transform: rotate(45deg); }
-        .repo-meta { border-left: 1px solid var(--accent); padding-left: 30px; }
-        .repo-description { color: var(--text-dim); margin-bottom: 20px; }
-        .repo-btn { display: inline-block; border: 1px solid var(--accent); color: var(--accent); padding: 12px 35px; text-decoration: none; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; }
+        
         #status-msg { padding: 40px 10%; color: var(--accent); font-family: monospace; }
         footer { padding: 80px 10%; text-align: center; color: var(--text-dim); font-size: 0.8rem; }
     </style>
 </head>
 <body>
 
-    <div id="main-content">
+    <!-- Обертка, которую мы будем крутить -->
+    <div id="app-wrapper">
         <section class="hero">
             <p class="hero-label">Добрый Хакер // 2026</p>
             <h1>PYTHON<br><span>SYSTEMS</span></h1>
-            <button class="activate-btn" onclick="go4()">Initialize Black Hole</button>
+            <button class="activate-btn" onclick="startInfiniteSpin()">Initialize Singularity</button>
         </section>
 
         <div id="status-msg">ИНИЦИАЛИЗАЦИЯ GITHUB API...</div>
@@ -176,35 +101,16 @@
         <footer>© 2026 ANTARETI. ВСЕ ПРАВА ЗАЩИЩЕНЫ.</footer>
     </div>
 
-    <!-- ЭКРАН ЧЕРНОЙ ДЫРЫ -->
-    <div id="black-hole-overlay">
-        <div class="bh-container">
-            <div class="bh-distortion"></div>
-            <div class="bh-disk"></div>
-            <div class="bh-shadow"></div>
-        </div>
-        <div class="bh-text">
-            <h2>SINGULARITY ACHIEVED</h2>
-            <p style="margin-top: 15px; letter-spacing: 1px; color: #fff;">System collapsed into the void</p>
-            <button class="activate-btn" onclick="location.reload()" style="margin-top: 30px;">Restore Reality</button>
-        </div>
-    </div>
-
     <script>
         const USER = 'antareti';
 
-        function go4() {
-            // 1. Запускаем анимацию "схлопывания" основного сайта
-            document.body.classList.add('collapsing');
+        // ТА САМАЯ ФУНКЦИЯ БЕСКОНЕЧНОГО ВРАЩЕНИЯ
+        function startInfiniteSpin() {
+            const wrapper = document.getElementById('app-wrapper');
+            wrapper.classList.add('infinite-spin');
             
-            // 2. Через секунду показываем черную дыру
-            setTimeout(() => {
-                const overlay = document.getElementById('black-hole-overlay');
-                overlay.style.display = 'flex';
-                setTimeout(() => {
-                    overlay.style.opacity = '1';
-                }, 50);
-            }, 1000);
+            // Опционально: меняем фон на более глубокий красный
+            document.body.style.backgroundColor = '#1a0000';
         }
 
         async function loadRepos() {
@@ -226,10 +132,7 @@
                                 <div class="phase-icon">+</div>
                             </div>
                             <div class="phase-content">
-                                <div class="repo-meta">
-                                    <p class="repo-description">${repo.description || "Project documentation pending."}</p>
-                                    <a href="${repo.html_url}" target="_blank" class="repo-btn">Source Code</a>
-                                </div>
+                                <p style="padding: 20px 0; color: var(--text-dim)">${repo.description || "No description provided."}</p>
                             </div>
                         </div>`;
                 });
