@@ -22,33 +22,51 @@
         body {
             background-color: var(--bg);
             color: var(--text-main);
-            overflow-x: hidden;
+            overflow: hidden; /* Скрываем прокрутку для чистого эффекта */
             -webkit-font-smoothing: antialiased;
-            perspective: 1000px; /* Добавляем глубину для 3D вращения */
         }
 
-        /* ГЛАВНЫЙ КОНТЕЙНЕР, КОТОРЫЙ БУДЕТ КРУТИТЬСЯ */
-        #main-content {
-            transition: all 0.5s ease;
-            transform-origin: center center;
+        /* КОНТЕЙНЕР ДЛЯ ВИДЕО */
+        #video-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #000;
+            z-index: 9999;
+        }
+
+        #video-container video {
             width: 100%;
-            min-height: 100vh;
+            height: 100%;
+            object-fit: cover;
         }
 
-        /* КЛАСС БЕСКОНЕЧНОГО ВРАЩЕНИЯ */
-        .black-hole-mode {
-            animation: spin-forever 4s infinite linear !important;
-            filter: hue-rotate(45deg) contrast(1.2);
-            pointer-events: none; /* Отключаем клики во время вращения */
+        /* КНОПКА ЗАКРЫТИЯ (ПО ЖЕЛАНИЮ) */
+        .close-video {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,0,0,0.5);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: monospace;
+            z-index: 10000;
+            text-transform: uppercase;
         }
 
-        @keyframes spin-forever {
-            from { transform: rotate(0deg) scale(1); }
-            50% { transform: rotate(1800deg) scale(0.6); filter: blur(2px) invert(0.2); }
-            to { transform: rotate(3600deg) scale(1); }
+        /* ОСНОВНОЙ КОНТЕНТ */
+        #main-content {
+            transition: opacity 1s ease, transform 1.5s ease;
+            width: 100%;
+            height: 100vh;
+            overflow-y: auto;
         }
 
-        /* СТИЛИ САЙТА */
         .hero {
             height: 70vh;
             display: flex;
@@ -65,19 +83,18 @@
         .activate-btn {
             margin-top: 30px;
             background: transparent;
-            border: 2px solid var(--accent);
+            border: 1px solid var(--accent);
             color: var(--accent);
             padding: 12px 25px;
             cursor: pointer;
             text-transform: uppercase;
             font-weight: 900;
-            width: fit-content;
+            letter-spacing: 2px;
             transition: 0.3s;
         }
 
         .activate-btn:hover { background: var(--accent); color: white; box-shadow: 0 0 20px var(--accent); }
 
-        /* СПИСОК РЕПОЗИТОРИЕВ */
         .phases-wrapper { width: 100%; }
         .phase-item { border-bottom: 1px solid var(--border); transition: 0.3s; }
         .phase-header { padding: 45px 10%; display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -92,33 +109,21 @@
         
         #status-msg { padding: 40px 10%; color: var(--accent); font-family: monospace; }
         footer { padding: 80px 10%; text-align: center; color: var(--text-dim); font-size: 0.8rem; }
-
-        /* ПРЕДУПРЕЖДЕНИЕ ПО ЦЕНТРУ */
-        #warning-text {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
-            color: #fff;
-            text-align: center;
-            pointer-events: all;
-        }
     </style>
 </head>
 <body>
 
-    <div id="warning-text">
-        <h2 style="font-size: 3rem; color: var(--accent);">SINGULARITY</h2>
-        <button class="activate-btn" onclick="location.reload()">ОСТАНОВИТЬ ХАОС</button>
+    <!-- ПОЛНОЭКРАННОЕ ВИДЕО -->
+    <div id="video-container">
+        <button class="close-video" onclick="location.reload()">[ EXIT ]</button>
+        <video id="myVideo" src="8.mp4" preload="auto"></video>
     </div>
 
     <div id="main-content">
         <section class="hero">
             <p class="hero-label">Добрый Хакер // 2026</p>
             <h1>PYTHON<br><span>SYSTEMS</span></h1>
-            <button class="activate-btn" onclick="goBlackHole()">Initialize Black Hole</button>
+            <button class="activate-btn" onclick="playSecretVideo()">Initialize Breach</button>
         </section>
 
         <div id="status-msg">ИНИЦИАЛИЗАЦИЯ GITHUB API...</div>
@@ -130,23 +135,27 @@
     <script>
         const USER = 'antareti';
 
-        // ЛОГИКА ВРАЩЕНИЯ
-        function goBlackHole() {
+        function playSecretVideo() {
             const content = document.getElementById('main-content');
-            const warning = document.getElementById('warning-text');
-            
-            content.classList.add('black-hole-mode');
-            warning.style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Запрещаем скролл во время хаоса
+            const videoCont = document.getElementById('video-container');
+            const video = document.getElementById('myVideo');
+
+            // Исчезновение сайта
+            content.style.opacity = '0';
+            content.style.transform = 'scale(1.1)';
+
+            setTimeout(() => {
+                content.style.display = 'none';
+                videoCont.style.display = 'block';
+                video.play(); // Запуск видео
+            }, 1000);
         }
 
-        // ЛОГИКА ЗАГРУЗКИ РЕПОЗИТОРИЕВ
         async function loadRepos() {
             const list = document.getElementById('repos-list');
             const msg = document.getElementById('status-msg');
             try {
                 const response = await fetch(`https://api.github.com/users/${USER}/repos?sort=updated&per_page=100`);
-                if (!response.ok) throw new Error();
                 const repos = await response.json();
                 
                 msg.style.display = 'none';
@@ -168,7 +177,6 @@
                         </div>`;
                 });
 
-                // Инициализация аккордеона
                 document.querySelectorAll('.phase-header').forEach(h => {
                     h.onclick = () => {
                         const item = h.parentElement;
@@ -177,12 +185,10 @@
                         if (!wasActive) item.classList.add('active');
                     };
                 });
-
             } catch (e) {
-                msg.innerText = 'ОШИБКА: НЕ УДАЛОСЬ ПОЛУЧИТЬ ДАННЫЕ GITHUB';
+                msg.innerText = 'ОШИБКА GITHUB API';
             }
         }
-
         loadRepos();
     </script>
 </body>
